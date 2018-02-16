@@ -13,15 +13,18 @@ import AudioToolbox // For vibration
 class Compass: UIView, CLLocationManagerDelegate
 {
   
-  fileprivate var _lastLocation   : CLLocation? // Last location
-  fileprivate var _desiredHeading : CGFloat = 0 // The desired heading private to the class. [Default: 0 (north)]
+  fileprivate var _lastLocation   : CLLocation?  // Last location
+  fileprivate var _desiredHeading : CGFloat = 90 // The desired heading private to the class. [Default: 0 (north)]
+  fileprivate var _accuracy       : CGFloat = 30 // Leeway on both sides for considered pointing toward desired location [Default: 30]
   
-  var desiredHeading: CGFloat
-  {                 // The desired heading inputted by the superview [GET, SET]
+  var desiredHeading: CGFloat { // The desired heading inputted by the superview [GET, SET]
     set{ _desiredHeading = newValue }
     get{ return _desiredHeading     }
   }
-  
+  var accuracy: CGFloat       { // The desired accuracy inputted by the superview [GET, SET]
+    set{ _accuracy = newValue }
+    get{ return _accuracy     }
+  }
   fileprivate let directionLabel  = UILabel()   // Label placed in the middle of the compass denoting current direction
   
   let locationManager: CLLocationManager = {
@@ -186,13 +189,13 @@ extension Compass
       }else{ AudioServicesPlayAlertSound(kSystemSoundID_Vibrate) }
     }
     
-    var lowerBound = _desiredHeading - 30
-    if _desiredHeading < 30 {
-      lowerBound = 360 - (30 - _desiredHeading) // Get proper lower bound ( avoid < 0 )
-      if CGFloat(angle) > lowerBound && angle < 360 || CGFloat(angle) > 0 && CGFloat(angle) < CGFloat(Int((_desiredHeading + 30)) % 360) { bingo(angle: CGFloat(angle)) }
+    var lowerBound = _desiredHeading - _accuracy
+    if _desiredHeading < _accuracy {
+      lowerBound = 360 - (_accuracy - _desiredHeading) // Get proper lower bound ( avoid < 0 )
+      if CGFloat(angle) > lowerBound && angle < 360 || CGFloat(angle) > 0 && CGFloat(angle) < CGFloat(Int((_desiredHeading + _accuracy)) % 360) { bingo(angle: CGFloat(angle)) }
       else { resetCompassTraits() }
     }
-    if CGFloat(angle) > lowerBound && CGFloat(angle) < CGFloat(Int((_desiredHeading + 30)) % 360) { bingo(angle: CGFloat(angle)) }
+    if CGFloat(angle) > lowerBound && CGFloat(angle) < CGFloat(Int((_desiredHeading + _accuracy)) % 360) { bingo(angle: CGFloat(angle)) }
     else
     { resetCompassTraits() }
     
