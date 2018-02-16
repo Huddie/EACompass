@@ -272,6 +272,9 @@ extension String {
   }
 }
 
+
+// Help getting device model (7,8,9...etc) for haptic feedback
+// https://stackoverflow.com/questions/26028918/how-to-determine-the-current-iphone-device-model
 public extension UIDevice
 {
   
