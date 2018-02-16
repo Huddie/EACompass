@@ -14,6 +14,7 @@
 		C07DA236203211F70070B5CD /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C07DA234203211F70070B5CD /* LaunchScreen.storyboard */; };
 		C07DA241203211F70070B5CD /* EACompassTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07DA240203211F70070B5CD /* EACompassTests.swift */; };
 		C07DA24C203211F80070B5CD /* EACompassUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07DA24B203211F80070B5CD /* EACompassUITests.swift */; };
+		C07DA25A203213090070B5CD /* Compass.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07DA259203213090070B5CD /* Compass.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,6 +48,7 @@
 		C07DA247203211F70070B5CD /* EACompassUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EACompassUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C07DA24B203211F80070B5CD /* EACompassUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EACompassUITests.swift; sourceTree = "<group>"; };
 		C07DA24D203211F80070B5CD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C07DA259203213090070B5CD /* Compass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Compass.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,6 +101,7 @@
 			children = (
 				C07DA22B203211F70070B5CD /* AppDelegate.swift */,
 				C07DA22D203211F70070B5CD /* ViewController.swift */,
+				C07DA259203213090070B5CD /* Compass.swift */,
 				C07DA22F203211F70070B5CD /* Main.storyboard */,
 				C07DA232203211F70070B5CD /* Assets.xcassets */,
 				C07DA234203211F70070B5CD /* LaunchScreen.storyboard */,
@@ -261,6 +264,7 @@
 			files = (
 				C07DA22E203211F70070B5CD /* ViewController.swift in Sources */,
 				C07DA22C203211F70070B5CD /* AppDelegate.swift in Sources */,
+				C07DA25A203213090070B5CD /* Compass.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
