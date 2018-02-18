@@ -12,19 +12,22 @@ import AudioToolbox // For vibration
 
 class Compass: UIView, CLLocationManagerDelegate
 {
+  fileprivate let _circleDegress  = 360
   
-  fileprivate var _lastLocation   : CLLocation?  // Last location
-  fileprivate var _desiredHeading : CGFloat = 90 // The desired heading private to the class. [Default: 0 (north)]
-  fileprivate var _accuracy       : CGFloat = 30 // Leeway on both sides for considered pointing toward desired location [Default: 30]
+  fileprivate var _lastLocation   : CLLocation?   // Last location
+  fileprivate var _desiredHeading : CGFloat = 90  // The desired heading private to the class. [Default: 0 (north)]
+  fileprivate var _accuracy       = 30            // Leeway on both sides for considered pointing toward desired location [Default: 30]
   
-  var desiredHeading: CGFloat { // The desired heading inputted by the superview [GET, SET]
+  var desiredHeading: CGFloat       {  // The desired heading inputted by the superview [GET, SET]
     set{ _desiredHeading = newValue }
     get{ return _desiredHeading     }
   }
-  var accuracy: CGFloat       { // The desired accuracy inputted by the superview [GET, SET]
+  
+  var accuracy: Int           { // The desired accuracy inputted by the superview [GET, SET]
     set{ _accuracy = newValue }
     get{ return _accuracy     }
   }
+  
   fileprivate let directionLabel  = UILabel()   // Label placed in the middle of the compass denoting current direction
   
   let locationManager: CLLocationManager = {
@@ -105,10 +108,10 @@ extension Compass {
   /*********** Private ******************/
   fileprivate func createDirectionLabel()
   {
-    directionLabel.font      = UIFont(name: "AvenirNext-UltraLight", size: 40)
-    directionLabel.text      = "Red points east"
-    directionLabel.center    = CGPoint(x: self.bounds.midX, y: self.bounds.midY)
-    directionLabel.textColor = UIColor.white
+    directionLabel.font          = UIFont(name: "AvenirNext-UltraLight", size: 40)
+    directionLabel.text          = "Red points east"
+    directionLabel.center        = CGPoint(x: self.bounds.midX, y: self.bounds.midY)
+    directionLabel.textColor     = UIColor.white
     self.addSubview(directionLabel)
   }
   fileprivate func createDashedView()
@@ -155,7 +158,9 @@ extension Compass
     guard let currentLocation = locations.last else { return }
     _lastLocation = currentLocation // store this location somewhere
   }
+  
   func locationManagerShouldDisplayHeadingCalibration(_ manager: CLLocationManager) -> Bool { return true }
+  
   func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading)
   {
     var angle         = newHeading.trueHeading
@@ -169,36 +174,42 @@ extension Compass
     arrowLayer.setAffineTransform(arrowRotation)
     
     // Account for offset
-    angle = angle + 15.0
+    angle += 15.0
     
-    // Vibrate / Haptic feedback
-    if CGFloat(angle).rounded() ==  _desiredHeading
+    determineDirection(angle: CGFloat(angle))
+    determineGreenRingEffect(angle: CGFloat(angle))
+    resizeLabel()
+  }
+  
+  fileprivate func determineGreenRingEffect(angle: CGFloat)
+  {
+    var lowerBound      = _desiredHeading - _accuracy.cgValue
+    var adjustedAngle   = CGFloat(angle)
+    var adjustedHeading = _desiredHeading
+    
+    if _desiredHeading <= (_accuracy.cgValue * 2) || _desiredHeading >= _circleDegress.cgValue - _accuracy.cgValue
     {
-      if let iPhone_number = Int((UIDevice.current.modelName.getNumber))
-      {
-        if iPhone_number < 7
-        {
-          AudioServicesPlayAlertSound(kSystemSoundID_Vibrate)
-        }
-        else
-        {
-          let generator = UIImpactFeedbackGenerator(style: .medium)
-          generator.prepare()
-          generator.impactOccurred()
-        }
-      }else{ AudioServicesPlayAlertSound(kSystemSoundID_Vibrate) }
-    }
-    
-    var lowerBound = _desiredHeading - _accuracy
-    if _desiredHeading < _accuracy {
-      lowerBound = 360 - (_accuracy - _desiredHeading) // Get proper lower bound ( avoid < 0 )
-      if CGFloat(angle) > lowerBound && angle < 360 || CGFloat(angle) > 0 && CGFloat(angle) < CGFloat(Int((_desiredHeading + _accuracy)) % 360) { bingo(angle: CGFloat(angle)) }
+      
+      if CGFloat(angle)  < _accuracy.cgValue { adjustedAngle = _circleDegress.cgValue + CGFloat(angle) }
+      if _desiredHeading <= (_accuracy.cgValue * 2) { adjustedHeading =  _circleDegress.cgValue + _desiredHeading }
+      
+      lowerBound =  adjustedHeading - _accuracy.cgValue
+      
+      if adjustedAngle > lowerBound && adjustedAngle <= adjustedHeading + _accuracy.cgValue { bingo(angle: adjustedAngle, heading: adjustedHeading) }
       else { resetCompassTraits() }
     }
-    if CGFloat(angle) > lowerBound && CGFloat(angle) < CGFloat(Int((_desiredHeading + _accuracy)) % 360) { bingo(angle: CGFloat(angle)) }
-    else
-    { resetCompassTraits() }
-    
+    else if CGFloat(angle) > lowerBound && CGFloat(angle) < CGFloat(Int((_desiredHeading + _accuracy.cgValue)) % _circleDegress) { bingo(angle: CGFloat(angle), heading: _desiredHeading) }
+    else { resetCompassTraits() }
+  }
+  
+  fileprivate func resizeLabel()
+  {
+    directionLabel.sizeToFit()
+    directionLabel.center = CGPoint(x: self.bounds.midX, y: self.bounds.midY)
+  }
+  
+  fileprivate func determineDirection(angle: CGFloat)
+  {
     if      angle > 330 && angle < 360 || angle > 0 && angle < 30   { directionLabel.text = "N"  }
     else if angle > 150 && angle < 210 { directionLabel.text = "S"  }
     else if angle > 60  && angle < 120 { directionLabel.text = "E"  }
@@ -208,10 +219,25 @@ extension Compass
     else if angle > 120 && angle < 150 { directionLabel.text = "SE" }
     else if angle > 210 && angle < 240 { directionLabel.text = "SW" }
     else {}
-    
-    directionLabel.sizeToFit()
-    directionLabel.center = CGPoint(x: self.bounds.midX, y: self.bounds.midY)
   }
+  
+  fileprivate func vibrate()
+  {
+    if let iPhone_number = Int((UIDevice.current.modelName.getNumber))
+    {
+      if iPhone_number < 7
+      {
+        AudioServicesPlayAlertSound(kSystemSoundID_Vibrate)
+      }
+      else
+      {
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.prepare()
+        generator.impactOccurred()
+      }
+    }else{ AudioServicesPlayAlertSound(kSystemSoundID_Vibrate) }
+  }
+  
   fileprivate func resetCompassTraits()
   {
     movingLayer.strokeColor     = UIColor.white.cgColor
@@ -220,11 +246,13 @@ extension Compass
     directionLabel.textColor    = UIColor.white
   }
   
-  fileprivate func bingo(angle: CGFloat)
+  fileprivate func bingo(angle: CGFloat, heading: CGFloat)
   {
+    let ratio: CGFloat          = 1 - (abs(heading - angle) / heading) * 2
     
-    let den = _desiredHeading != 0 ? _desiredHeading : 1
-    let ratio: CGFloat          = 1 - abs(angle - den)/den
+    if ratio > 0.990 { vibrate() }  // Vibrate/ Haptic feedback
+
+    // Set green color
     directionLabel.textColor    = UIColor.green.withAlphaComponent(ratio)
     movingLayer.strokeColor     = UIColor.green.withAlphaComponent(ratio).cgColor
     foregroundLayer.strokeColor = UIColor.green.withAlphaComponent(ratio).cgColor
@@ -253,13 +281,19 @@ public extension CLLocation
   }
   
   func bearingToLocationDegrees(destinationLocation: CLLocation) -> CGFloat
-  {return bearingToLocationRadian(destinationLocation).toDegrees }
+  { return bearingToLocationRadian(destinationLocation).toDegrees }
+  
 }
 
+extension Int
+{
+  var cgValue : CGFloat { return CGFloat(self) }
+}
 extension CGFloat
 {
   var toRadians: CGFloat { return self * .pi / 180 }
   var toDegrees: CGFloat { return self * 180 / .pi }
+  var intValue : Int     { return Int(self) }
 }
 extension Double
 {
@@ -274,7 +308,6 @@ extension String {
       .flatMap { pattern ~= $0 ? Character($0) : nil })
   }
 }
-
 
 // Help getting device model (7,8,9...etc) for haptic feedback
 // https://stackoverflow.com/questions/26028918/how-to-determine-the-current-iphone-device-model
